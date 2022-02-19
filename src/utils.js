@@ -3,6 +3,8 @@ import * as fs from "fs";
 const lastIdsFileName = "lastIds.txt";
 const idSplitter = " |$plit| ";
 
+//! Possible bug => check for nullable fields like guid
+
 export function ReadLastId(name) {
     if (!fs.existsSync(lastIdsFileName)) return "";
 
