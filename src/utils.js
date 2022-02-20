@@ -35,8 +35,10 @@ export function WriteLastId(name, id) {
     fs.writeFileSync(lastIdsFileName, newContent.join("\n"));
 }
 
-export async function GetUpdates(feedAddress) {
-    const feed = await new Parser().parseURL(feedAddress);
+export function GetUpdates(feedAddress) {
+    var feed = new Parser().parseURL(feedAddress).then((items) => {
+        console.log(items);
+    });
 
     const lastId = ReadLastId(feedAddress);
 
@@ -45,7 +47,7 @@ export async function GetUpdates(feedAddress) {
 
     // Find the index of last recorded item from feed
     // ├── If the index was 0 => feed hasn't updated since last check
-    // ├── If the index was equal to total of items - 1 => feed is being read for firat time OR
+    // ├── If the lastId was empty => feed is being read for firat time OR
     //     it has no item in it
     var lastItemIndex = -1;
     for (let i = 0; i < feedItems.length; i++) {
@@ -56,7 +58,9 @@ export async function GetUpdates(feedAddress) {
         } else if (item.guid == lastId) {
             lastItemIndex = i;
             break;
-        } else if (i == feedItems.length - 1) {
+        }
+
+        if (lastId == "") {
             lastItemIndex = i + 1;
             break;
         }
