@@ -132,4 +132,7 @@ dist
 # project files
 feed.rss
 feed.xml
-lastIds.txt
+ids*
+modified*
+etag*
+entry
