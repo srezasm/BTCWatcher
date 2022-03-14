@@ -1,7 +1,8 @@
-from email.utils import getaddresses
-from lib2to3.pgen2.token import NEWLINE
-from traceback import print_tb
+from ast import parse
+from uuid import uuid4
+from xml.dom import minidom
 import feedparser
+import xml.etree.ElementTree as etree
 
 # sience [rsshub](rsshub.app) project supports [etag and modified](https://pythonhosted.org/feedparser/http-etag.html) features, using rsshub is in priority
 feed_dic = [
@@ -19,14 +20,9 @@ feed_dic = [
 ]
 
 # ==== start test ====
-d = feedparser.parse(feed_dic[0]['url'])
-
-d2 = feedparser.parse(feed_dic[3]['url'],
-                     etag='')
-
-print('has etag') if hasattr(d, 'etag') else print('doesn\'t have etag')
-    
-
+# d = feedparser.parse(feed_dic[0]['url'])
+# d2 = feedparser.parse(feed_dic[3]['url'],
+#                      etag='')
 # with open('./entry', 'a') as f:
 #     for e in d2.entries:
 #         f.write(e.title)
@@ -36,33 +32,44 @@ print('has etag') if hasattr(d, 'etag') else print('doesn\'t have etag')
 #     f.write(d.etag + '\n')
 #     f.write(d.modified + '\n')
 
-print('done')
+# file = minidom.parse(
+#     file='/home/srezas/Programming/jsWorkspace/BTCWatcher/src/feed.rss')
+# title = file.getElementsByTagName('title')
+# print(title[0].data)
+
 # ===== end test =====
 
 
 def listener():
     for feed in feed_dic:
         items = get_data(feed)
+        for i in items:
+            # !: check for right name of the attributes in feedparser documetions
+            new_item(i.title, i.description, i.link, i.categories, i.published)
+
+
+def get_data(feed):
+    p = feedparser.parse(feed['url'])
+    new_items = fetch_new_items(feed['name'], p.entries)
+
+    formatted_items = []
+    for i in new_items.items:
+        formatted_items.append(format_item(i, feed['type'], feed['name']))
+
+    # may be used later ¯\_(ツ)_/¯
+    if hasattr(p, 'etag'):
+        write_etag(p.modified)
+    if hasattr(p, 'modified'):
+        write_modified(p.modified)
+
+    return formatted_items
+
 
 def format_item(item, type, name):
     item.description = '{item.link}\n#{type} #{name}'
     return item
 
-def get_data(feed):
-    p = feedparser.parse(feed['url'])
-    new_items = filter_new_items(feed['name'], p.entries)
-
-    formatted_items = []
-    for i in new_items.items:
-        formatted_items.append(format_item(i, feed['type'], feed['name']))
-    
-    # may be used later ¯\_(ツ)_/¯
-    if hasattr(p, 'etag'): write_etag(p.modified)
-    if hasattr(p, 'modified'): write_modified(p.modified)
-
-    return formatted_items
-
-def filter_new_items(name, items):
+def fetch_new_items(name, items):
     with open('./ids.txt', 'r') as fr:
         # for first time, return all items
         if name not in fr.read():
@@ -102,7 +109,8 @@ def filter_new_items(name, items):
 
         return new_items
 
-#region etag
+# region etag
+
 
 def write_etag(name, etag):
     with open('./etag.txt', 'r') as fr:
@@ -116,6 +124,7 @@ def write_etag(name, etag):
         fw.write('\n'.join(lines))
         fw.close()
 
+
 def get_etag(name):
     with open('./etag.txt', 'r') as fr:
         lines = fr.read().splitlines()
@@ -128,9 +137,10 @@ def get_etag(name):
                 if l.startswith(name):
                     return l.split('::')[1]
 
-#endregion
+# endregion
 
-#region modified
+# region modified
+
 
 def write_modified(name, modified):
     with open('./modified.txt', 'r') as fr:
@@ -144,6 +154,7 @@ def write_modified(name, modified):
         fw.write('\n'.join(lines))
         fw.close()
 
+
 def get_modified(name):
     with open('./modified.txt', 'r') as fr:
         lines = fr.read().splitlines()
@@ -156,4 +167,37 @@ def get_modified(name):
                 if l.startswith(name):
                     return l.split('::')[1]
 
-#endregion
+# endregion
+
+def new_item(title: str, description: str, link: str, categories: list, pubdate: str):
+    item = etree.Element('item')
+
+    tt = etree.SubElement(item, 'title')
+    tt.text = title
+
+    dc = etree.SubElement(item, 'description')
+    dc.text = description
+
+    ln = etree.SubElement(item, 'link')
+    ln.text = link
+
+    for category in categories:
+        ct = etree.SubElement(item, 'category')
+        ct.text = category
+
+    pd = etree.SubElement(item, 'pubDate')
+    pd.text = pubdate
+
+    gui = etree.SubElement(item, 'guid')
+    gui.text = str(uuid4())
+    
+    return item
+
+def write_new_items(parsed: etree.Element, items: list):
+    for i in items:
+        parsed.append(i)
+
+    # todo: change feed.test.rss to feed.rss
+    with open('./feed.test.rss', 'wb') as f:
+        etree.ElementTree(parsed).write(f)
+
