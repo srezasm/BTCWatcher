@@ -130,8 +130,8 @@ dist
 .pnp.*
 
 # project files
-feed.rss
-feed.xml
+feed*rss
+feed*xml
 ids*
 modified*
 etag*
