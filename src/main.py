@@ -10,11 +10,11 @@ import xml.etree.ElementTree as etree
 
 # [rsshub](rsshub.app) is in priority because of supporting [etag and modified](https://pythonhosted.org/feedparser/http-etag.html)
 feed_dic = [
-    {'name': 'samourai_wallet', 'type': 'reddit',
-        'url': 'https://www.reddit.com/r/AskReddit/new/.rss'},
+    # {'name': 'reddit', 'type': 'reddit',
+    #     'url': 'https://www.reddit.com/r/AskReddit/new/.rss'},
 
-    # {'name': 'samourai_wallet', 'type': 'article',
-    #     'url': 'https://medium.com/feed/@SamouraiWallet'},
+    {'name': 'samourai_wallet', 'type': 'article',
+        'url': 'https://medium.com/feed/@SamouraiWallet'},
 
     # {'name': 'samourai_wallet', 'type': 'twitter',
     #     'url': 'https://rsshub.app/twitter/user/SamouraiWallet/showEmojiForRetweetAndReply=1&excludeReplies=1&showTimestampInDescription=1'},
@@ -23,6 +23,7 @@ feed_dic = [
     #     'url': 'https://rsshub.app/youtube/channel/UCb4Y89L9Bokuo6OWqjAhMoA'},
 ]
 
+
 file_dic = {
     'ids': './ids.txt',
     'etags': './etags.txt',
@@ -30,6 +31,7 @@ file_dic = {
     'feed': './feed.rss',
     'test_feed': 'feed.test.rss'
 }
+
 
 def init():
     if not path.exists(file_dic['ids']):
@@ -42,6 +44,7 @@ def init():
     if not path.exists(file_dic['feed']):
         with open(file_dic['feed'], 'w') as fw:
             fw.write('<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title>BTC Watcher</title><link>https://t.me/BTCWatcher</link><atom:link href="https://t.me/BTCWatcher" rel="self" type="application/rss+xml"/><description>A simple watch tower rss.feed over bitcoin nice resources</description><generator>SReza S</generator><language>en</language><lastBuildDate>Sun, 13 Mar 2022 13:16:22 GMT</lastBuildDate><atom:link href="https://t.me/BTCWatcher" rel="self" type="application/rss+xml"/></channel></rss>')
+
 
 def listener():
     for feed in feed_dic:
@@ -74,32 +77,15 @@ def get_data(feed):
     return formatted_items
 
 
-# region xml handling
-
-def format_item(item, type, name):
-    pubt = '\npublished: '
-    if (hasattr(item, 'published')):
-        pubt += item.published
-    else:
-        pubt += strftime('%a, %d %b %Y %X GMT', gmtime())
-
-    link = ''
-    if (hasattr(item, 'link')):
-        link = item.link + '\n'
-
-    item['description'] = link + '#' + type + ' #' + name + pubt
-    return item
-
-
 def fetch_new_items(name, items: list):
-    with open(file_dic['ids'], 'r') as fr, open(file_dic['ids'], 'w') as fw:
+    with open(file_dic['ids']) as fr:
         old_lines = fr.read().splitlines()
         old_ids = []
         new_lines = old_lines.copy()
         
         isn = False
         for ol in old_lines:
-            if ol.startswith('name'): isn = True
+            if ol.startswith(name): isn = True
 
         if not isn:
             ii = []
@@ -107,14 +93,14 @@ def fetch_new_items(name, items: list):
                 ii.append(i.id)
 
             new_lines.append(name + '::' + '::'.join(ii))
-            
-            fw.write('\n'.join(new_lines))
+            with open(file_dic['ids'], 'w') as fw:
+                fw.write('\n'.join(new_lines))
             return items
 
         # fill the old_ids with current feed ids
         for ol in old_lines:
             if ol.startswith(name):
-                old_ids.append(ol.split('::'))
+                old_ids.extend(ol.split('::'))
                 old_ids.pop(0)
 
         # fill new_items
@@ -130,77 +116,32 @@ def fetch_new_items(name, items: list):
             new_ids.append(ni.id)
 
         # fill new_lines
-        for nl in new_lines:
+        for i in range(len(new_lines)):
+            nl = new_lines[i]
+
             if nl.startswith(name):
-                nl += '::' + '::'.join(new_ids)
+                new_lines[i] = nl + '::' + '::'.join(new_ids)
 
         # write new_lines into ids.text
-        for nl in new_lines:
-            print(nl, file=fw)
+        with open(file_dic['ids'], 'w') as fw:
+            fw.write('\n'.join(new_lines))
 
         return new_items
 
-# endregion
 
+# region xml handling
 
-# region etag
+def format_item(item, type, name):
+    pubt = '\npublished: '
+    if (hasattr(item, 'published')):
+        pubt += item.published
+    else:
+        pubt += strftime('%a, %d %b %Y %X GMT', gmtime())
 
-def write_etag(name, etag):
-    with open(file_dic['etags'], 'r') as fr:
-        lines = fr.read().splitlines()
+    link = get_entry(item, 'link') + '\n'
 
-        for ni in len(lines):
-            if lines[ni].startswith(name):
-                lines[ni] = '{name}::{etag}'
-
-        fw = open(file_dic['etags'], 'w')
-        fw.write('\n'.join(lines))
-        fw.close()
-
-
-def get_etag(name):
-    with open(file_dic['etags'], 'r') as fr:
-        lines = fr.read().splitlines()
-
-        if name not in fr.read():
-            return ''
-
-        else:
-            for l in lines:
-                if l.startswith(name):
-                    return l.split('::')[1]
-
-# endregion
-
-
-# region modified
-
-def write_modified(name, modified):
-    with open(file_dic['modifieds'], 'r') as fr:
-        lines = fr.read().splitlines()
-
-        for ni in len(lines):
-            if lines[ni].startswith(name):
-                lines[ni] = '{name}::{modified}'
-
-        fw = open(file_dic['modifieds'], 'w')
-        fw.write('\n'.join(lines))
-        fw.close()
-
-
-def get_modified(name):
-    with open(file_dic['modifieds'], 'r') as fr:
-        lines = fr.read().splitlines()
-
-        if name not in fr.read():
-            return ''
-
-        else:
-            for l in lines:
-                if l.startswith(name):
-                    return l.split('::')[1]
-
-# endregion
+    item['description'] = link + '#' + type + ' #' + name + pubt
+    return item
 
 
 def new_item(title: str, description: str, link: str, categories: list, pubdate: str):
@@ -230,15 +171,80 @@ def new_item(title: str, description: str, link: str, categories: list, pubdate:
 
 def push_item(item):
     # todo: change feed.test.rss to feed.rss
-    parsed = minidom.parse(file_dic['test_feed'])
-    #! this doesn't work. find a way to insert the item at the top of other items.
-    parsed.insert(0, item)
+    # parsed = minidom.parse(file_dic['test_feed'])
+    with open(file_dic['test_feed'], 'rt') as f:
+        tree = etree.ElementTree.parse(source=f)
+        index = tree.childNodes.index('item')
+        tree.insert(index, item)
+        tree.set('lastBuildDate', get_current_time())
 
-    parsed.set('lastBuildDate', get_current_time())
 
     # todo: change feed.test.rss to feed.rss
     with open(file_dic['test_feed'], 'wb') as f:
-        etree.ElementTree(parsed).write(f)
+        etree.ElementTree(tree).write(f)
+
+
+# endregion
+
+
+# region etag
+
+def write_etag(name, etag):
+    with open(file_dic['etags']) as fr:
+        lines = fr.read().splitlines()
+
+        for ni in len(lines):
+            if lines[ni].startswith(name):
+                lines[ni] = '{name}::{etag}'
+
+        fw = open(file_dic['etags'], 'w')
+        fw.write('\n'.join(lines))
+        fw.close()
+
+
+def get_etag(name):
+    with open(file_dic['etags']) as fr:
+        lines = fr.read().splitlines()
+
+        if name not in fr.read():
+            return ''
+
+        else:
+            for l in lines:
+                if l.startswith(name):
+                    return l.split('::')[1]
+
+# endregion
+
+
+# region modified
+
+def write_modified(name, modified):
+    with open(file_dic['modifieds']) as fr:
+        lines = fr.read().splitlines()
+
+        for ni in len(lines):
+            if lines[ni].startswith(name):
+                lines[ni] = '{name}::{modified}'
+
+        fw = open(file_dic['modifieds'], 'w')
+        fw.write('\n'.join(lines))
+        fw.close()
+
+
+def get_modified(name):
+    with open(file_dic['modifieds']) as fr:
+        lines = fr.read().splitlines()
+
+        if name not in fr.read():
+            return ''
+
+        else:
+            for l in lines:
+                if l.startswith(name):
+                    return l.split('::')[1]
+
+# endregion
 
 
 # returns current time with feed format
