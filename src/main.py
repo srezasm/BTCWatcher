@@ -1,5 +1,6 @@
 from importlib.resources import path
-from os import path, mknod
+from os import PRIO_USER, path, mknod
+from xml.etree import ElementTree
 import feedparser
 from globaldic import *
 from feedfilehandler import *
@@ -35,14 +36,34 @@ def listener():
             write_modified(p.modified)
 
         for i in newitems:
-            format_item(i, feed['name'], feed['tags'])
+            format_item(i, fkey)
 
 
 # ==== start test ====
 # init()
 # listener()
 
-# d = feedparser.parse(feed_dic[0]['url'])
+url = feeddic['samourai_wallet_twitter']['url']
+d = feedparser.parse(url)
+item = d.entries[4]
+tweet = get_entry(item, 'description')
+print(tweet)
+
+for img in re.findall('<img .*?>', tweet):
+    imgl = re.search('(http|ftp|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])', img).group()
+    tweet = tweet.replace(img, f'[image]({imgl})')
+    continue
+for anc in re.findall('<a .*?>', tweet):
+    ancl = re.search('(http|ftp|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])', anc).group()
+    tweet = tweet.replace(anc, f'[link]({ancl})')
+    continue
+tweet = tweet.replace('<br />', '\n')
+print(tweet)
+# soup = BeautifulSoup(tweet, 'html.parser')
+# img = soup.select('img')
+# [i['src'] for i in img if i['src']]
+# img['src']
+
 # d2 = feedparser.parse(feed_dic[3]['url'],
 #                      etag='')
 # with open('./entry', 'a') as f:
