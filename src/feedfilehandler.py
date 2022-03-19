@@ -1,8 +1,7 @@
 import re
 from uuid import uuid4
-from xml.dom.minidom import Element
 import xml.etree.ElementTree as etree
-from globaldic import *
+from configs import *
 from utils import *
 
 
@@ -14,33 +13,41 @@ def format_item(item, key):
 
 
 def __format_default__(item, key):
+    itempubt = ''
+
     pubt = 'published: '
     if (hasattr(item, 'published')):
         pubt += item.published
+        itempubt = item.published
     else:
         pubt += strftime('%a, %d %b %Y %X GMT', gmtime())
+        itempubt = strftime('%a, %d %b %Y %X GMT', gmtime())
 
-    link = get_entry(item, 'link')
+    link = f'[{get_entry(item, "link")}](Link)'
 
     tags = feeddic[key]['tags']
     hashtags = '#' + ' #'.join(tags)
 
-    description = link + '\n' + hashtags + '\n' + pubt
+    description = get_entry(item, 'title') + '\n\n' + \
+        link + '\n' + hashtags + '\n' + pubt
 
-    new_item(get_entry(item, 'title'), description, link, tags, pubt)
+    new_item(get_entry(item, 'title'), description,
+             get_entry(item, 'link'), tags, itempubt)
 
 
 def __format_twitter__(item, key):
-    pubt, link, hashtags, tweet, description = ''
-    feed = feeddic[key]
+    itempubt = ''
+    link = ''
 
     pubt = 'published: '
     if (hasattr(item, 'published')):
         pubt += item.published
+        itempubt = item.published
     else:
         pubt += strftime('%a, %d %b %Y %X GMT', gmtime())
+        itempubt = strftime('%a, %d %b %Y %X GMT', gmtime())
 
-    tags = feed['tags']
+    tags = feeddic[key]['tags']
     hashtags = '#' + ' #'.join(tags)
 
     tweet = get_entry(item, 'description')
@@ -52,13 +59,16 @@ def __format_twitter__(item, key):
         link = f'[{get_entry(item, "link")}](Tweet Link)'
 
     for img in re.findall('<img .*?>', tweet):
-        imgl = re.search('(http|ftp|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])', img).group()
+        imgl = re.search(
+            '(http|ftp|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])', img).group()
         tweet = tweet.replace(img, f'[image]({imgl})')
     for vid in re.findall('<video .*?>', tweet):
-        vidl = re.search('(http|ftp|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])', vid).group()
+        vidl = re.search(
+            '(http|ftp|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])', vid).group()
         tweet = tweet.replace(vid, f'[link]({vidl})')
     for anc in re.findall('<a .*?/>', tweet):
-        ancl = re.search('(http|ftp|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])', anc).group()
+        ancl = re.search(
+            '(http|ftp|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])', anc).group()
         if(re.match('twitter.com/*./status/', ancl)):
             tweet = tweet.replace(anc, f'[quted tweet link]({ancl})')
         else:
@@ -68,7 +78,8 @@ def __format_twitter__(item, key):
     description = tweet + \
         '\n\n' + link + '\n' + hashtags + '\n' + pubt
 
-    new_item(get_entry(item, 'title'), description, link, tags, pubt)
+    new_item(get_entry(item, 'title'), description,
+             get_entry(item, "link"), tags, itempubt)
 
 
 def new_item(title: str, description: str, link: str, categories: list, pubdate: str):
@@ -93,14 +104,11 @@ def new_item(title: str, description: str, link: str, categories: list, pubdate:
     gui = etree.SubElement(item, 'guid')
     gui.text = str(uuid4())
 
-    # todo: change feed.test.rss to feed.rss
-    # parsed = minidom.parse(file_dic['test_feed'])
-    # with open(filedic['test_feed'], 'rt') as f:
-    #     tree = etree.ElementTree.parse(source=f)
-    #     index = tree.childNodes.index('item')
-    #     tree.insert(index, item)
-    #     tree.set('lastBuildDate', get_current_time())
+    with open(filedic['test_feed'], 'r') as fr:
+        f = fr.read()
+        i = f.index('<item>')
+        istr = etree.tostring(item).decode("utf-8")
+        nwf = f[:i] + istr + f[i:]
 
-    # todo: change feed.test.rss to feed.rss
-    # with open(filedic['test_feed'], 'wb') as f:
-    #     etree.ElementTree(tree).write(f)
+        with open(filedic['test_feed'], 'w') as fw:
+            fw.write(nwf)

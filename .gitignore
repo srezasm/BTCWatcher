@@ -129,6 +129,9 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+# python
+__pycache__
+
 # project files
 feed*rss
 feed*xml
@@ -136,3 +139,4 @@ ids*
 modified*
 etag*
 entry
+test.py

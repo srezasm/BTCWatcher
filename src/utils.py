@@ -1,5 +1,5 @@
 from time import gmtime, strftime
-from globaldic import *
+from configs import *
 
 
 # returns current time with feed format
@@ -24,6 +24,12 @@ def fetch_new_items(name, items: list):
             if ol.startswith(name):
                 isn = True
 
+                # fill the old_ids with current feed ids
+                oldids.extend(ol.split('::'))
+                oldids.pop(0)
+
+                break
+
         if not isn:
             ii = []
             for i in items:
@@ -34,30 +40,29 @@ def fetch_new_items(name, items: list):
                 fw.write('\n'.join(newlines))
             return items
 
-        # fill the old_ids with current feed ids
-        for ol in oldlines:
-            if ol.startswith(name):
-                oldids.extend(ol.split('::'))
-                oldids.pop(0)
-
         # fill new_items
         newitems = items.copy()
         for id in oldids:
             for it in items:
                 if id == it.id:
                     newitems.remove(it)
+                    break
+
+        if len(newitems) == 0:
+            return []
 
         # fill new_ids
         newids = []
         for ni in newitems:
             newids.append(ni.id)
 
-        # fill new_lines
+        # add new items ids to the file
         for i in range(len(newlines)):
             nl = newlines[i]
 
             if nl.startswith(name):
                 newlines[i] = nl + '::' + '::'.join(newids)
+                break
 
         # write new_lines into ids.text
         with open(filedic['ids'], 'w') as fw:
@@ -70,13 +75,17 @@ def write_etag(name, etag):
     with open(filedic['etags']) as fr:
         lines = fr.read().splitlines()
 
-        for ni in len(lines):
-            if lines[ni].startswith(name):
-                lines[ni] = 'name' + '::' + 'etag'
+        if len(lines) == 0:
+            lines.append(f'{name}::{etag}')
 
-        fw = open(filedic['etags'], 'w')
-        fw.write('\n'.join(lines))
-        fw.close()
+        for ni in range(len(lines)):
+            l = lines[ni]
+            if l.startswith(name):
+                l = f'{name}::{etag}'
+                break
+
+        with open(filedic['etags'], 'w') as fw:
+            fw.write('\n'.join(lines))
 
 
 def get_etag(name):
@@ -96,13 +105,17 @@ def write_modified(name, modified):
     with open(filedic['modifieds']) as fr:
         lines = fr.read().splitlines()
 
-        for ni in len(lines):
-            if lines[ni].startswith(name):
-                lines[ni] = 'name' + '::' + 'modified'
+        if len(lines) == 0:
+            lines.append(f'{name}::{modified}')
 
-        fw = open(filedic['modifieds'], 'w')
-        fw.write('\n'.join(lines))
-        fw.close()
+        for ni in range(len(lines)):
+            l = lines[ni]
+            if l.startswith(name):
+                l = f'{name}::{modified}'
+                break
+
+        with open(filedic['modifieds'], 'w') as fw:
+            fw.write('\n'.join(lines))
 
 
 def get_modified(name):

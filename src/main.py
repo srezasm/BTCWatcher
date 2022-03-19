@@ -1,10 +1,11 @@
 from importlib.resources import path
-from os import PRIO_USER, path, mknod
-from xml.etree import ElementTree
+from os import path, mknod
 import feedparser
-from globaldic import *
+from configs import *
 from feedfilehandler import *
 from utils import *
+import sched
+import time
 
 
 def init():
@@ -17,7 +18,11 @@ def init():
 
     if not path.exists(filedic['feed']):
         with open(filedic['feed'], 'w') as fw:
-            fw.write('<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title>BTC Watcher</title><link>https://t.me/BTCWatcher</link><atom:link href="https://t.me/BTCWatcher" rel="self" type="application/rss+xml"/><description>A simple watch tower rss.feed over bitcoin nice resources</description><generator>SReza S</generator><language>en</language><lastBuildDate>Sun, 13 Mar 2022 13:16:22 GMT</lastBuildDate><atom:link href="https://t.me/BTCWatcher" rel="self" type="application/rss+xml"/></channel></rss>')
+            fw.write('<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title>BTC Watcher</title><link>https://t.me/BTCWatcher</link><atom:link href="https://t.me/BTCWatcher" rel="self" type="application/rss+xml"/><description>A simple watch tower rss.feed over bitcoin nice resources</description><generator>SReza S</generator><language>en</language><lastBuildDate>Sun, 13 Mar 2022 13:16:22 GMT</lastBuildDate><atom:link href="https://t.me/BTCWatcher" rel="self" type="application/rss+xml"/></item><item><title>first default post</title><description>default</description><link>https://t.me/MyBtcFeeds</link><pubDate>Mon, 09 Aug 2021 12:17:40 GMT</pubDate><guid>960acfb7-e4cc-43c7-ba8d-d88b4590648b</guid></item></channel></rss>')
+
+
+init()
+sch = sched.scheduler(time.time, time.sleep)
 
 
 def listener():
@@ -27,57 +32,17 @@ def listener():
         feed = feeddic[fkey]
 
         p = feedparser.parse(feed['url'])
-        newitems = fetch_new_items(feed['name'], p.entries)
+        newitems = fetch_new_items(fkey, p.entries)
 
         # may be used later ¯\_(ツ)_/¯
         if hasattr(p, 'etag'):
-            write_etag(p.modified)
+            write_etag(fkey, p.etag)
         if hasattr(p, 'modified'):
-            write_modified(p.modified)
+            write_modified(fkey, p.modified)
 
         for i in newitems:
             format_item(i, fkey)
 
 
-# ==== start test ====
-# init()
-# listener()
-
-url = feeddic['samourai_wallet_twitter']['url']
-d = feedparser.parse(url)
-item = d.entries[4]
-tweet = get_entry(item, 'description')
-print(tweet)
-
-for img in re.findall('<img .*?>', tweet):
-    imgl = re.search('(http|ftp|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])', img).group()
-    tweet = tweet.replace(img, f'[image]({imgl})')
-    continue
-for anc in re.findall('<a .*?>', tweet):
-    ancl = re.search('(http|ftp|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])', anc).group()
-    tweet = tweet.replace(anc, f'[link]({ancl})')
-    continue
-tweet = tweet.replace('<br />', '\n')
-print(tweet)
-# soup = BeautifulSoup(tweet, 'html.parser')
-# img = soup.select('img')
-# [i['src'] for i in img if i['src']]
-# img['src']
-
-# d2 = feedparser.parse(feed_dic[3]['url'],
-#                      etag='')
-# with open('./entry', 'a') as f:
-#     for e in d2.entries:
-#         f.write(e.title)
-#         f.write('\n')
-#
-#     f.write(str(d.status) + '\n')
-#     f.write(d.etag + '\n')
-#     f.write(d.modified + '\n')
-
-# file = minidom.parse(
-#     file='/home/srezas/Programming/jsWorkspace/BTCWatcher/src/feed.rss')
-# title = file.getElementsByTagName('title')
-# print(title[0].data)
-
-# ===== end test =====
+sch.enter(60, 1, listener())
+sch.run()
