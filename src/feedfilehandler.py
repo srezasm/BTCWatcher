@@ -95,12 +95,12 @@ def new_item(title: str, description: str, link: str, categories: list, pubdate:
 
     # todo: change feed.test.rss to feed.rss
     # parsed = minidom.parse(file_dic['test_feed'])
-    with open(filedic['test_feed'], 'rt') as f:
-        tree = etree.ElementTree.parse(source=f)
-        index = tree.childNodes.index('item')
-        tree.insert(index, item)
-        tree.set('lastBuildDate', get_current_time())
+    # with open(filedic['test_feed'], 'rt') as f:
+    #     tree = etree.ElementTree.parse(source=f)
+    #     index = tree.childNodes.index('item')
+    #     tree.insert(index, item)
+    #     tree.set('lastBuildDate', get_current_time())
 
     # todo: change feed.test.rss to feed.rss
-    with open(filedic['test_feed'], 'wb') as f:
-        etree.ElementTree(tree).write(f)
+    # with open(filedic['test_feed'], 'wb') as f:
+    #     etree.ElementTree(tree).write(f)
