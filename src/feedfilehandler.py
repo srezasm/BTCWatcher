@@ -30,7 +30,7 @@ def __format_default__(item, key):
         pubt += get_current_time()
         itempubt = get_current_time()
 
-    link = f'[{get_entry(item, "link")}](Link)'
+    link = f'[Link]({get_entry(item, "link")})'
 
     tags = feeddic[key]['tags']
     hashtags = '#' + ' #'.join(tags)
@@ -60,9 +60,9 @@ def __format_twitter__(item, key):
 
     if tweet.startswith('🔁'):
         # tweet = tweet.replace('<br />', ':\n', 1)
-        link = f'[{get_entry(item, "link")}](ReTweet Link)'
+        link = f'[ReTweet Link]({get_entry(item, "link")})'
     else:
-        link = f'[{get_entry(item, "link")}](Tweet Link)'
+        link = f'[Tweet Link]({get_entry(item, "link")})'
 
     for img in re.findall('<img .*?>', tweet):
         imgl = re.search(
@@ -98,7 +98,7 @@ def __format_github_release__(item, key):
         pubt += get_current_time()
         itempubt = get_current_time()
 
-    link = f'[{get_entry(item, "link")}](Link)'
+    link = f'[Link]({get_entry(item, "link")})'
 
     tags = feeddic[key]['tags']
     hashtags = '#' + ' #'.join(tags)
