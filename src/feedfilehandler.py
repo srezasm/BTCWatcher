@@ -151,12 +151,12 @@ def new_item(title: str, description: str, link: str, categories: list, pubdate:
     gui = etree.SubElement(item, 'guid')
     gui.text = str(uuid4())
 
-    with open(filedic['test_feed'], 'r') as fr:
+    with open(filedic['feed'], 'r') as fr:
         f = fr.read()
         i = f.index('<item>')
         istr = etree.tostring(item).decode("utf-8")
         nwf = f[:i] + istr + f[i:]
 
         log_info(f'writing item: {gui.text}')
-        with open(filedic['test_feed'], 'w') as fw:
+        with open(filedic['feed'], 'w') as fw:
             fw.write(nwf)

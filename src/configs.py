@@ -121,5 +121,4 @@ filedic = {
     'etags': './etags.txt',
     'modifieds': './modifieds.txt',
     'feed': './feed.rss',
-    'test_feed': './feed.test.rss'
 }
