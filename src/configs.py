@@ -102,13 +102,13 @@ feeddic = {
         'url': 'https://lightningjunkies.net/rss/'
     },
 
-    'stephan_livera_meetings': {
+    'stephan_livera_podcast': {
         'name': 'Stephan Livera Podcast',
         'tags': ['podcast', 'stephan_livera'],
         'url': 'https://anchor.fm/s/7d083a4/podcast/rss'
     },
 
-    'opt_out_meetings': {
+    'opt_out_podcast': {
         'name': 'Opt Out',
         'tags': ['podcast', 'opt_out'],
         'url': 'https://feeds.buzzsprout.com/1790481.rss'

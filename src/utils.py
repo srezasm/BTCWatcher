@@ -9,8 +9,8 @@ def get_current_time():
 
 
 # prevents possible errors if the called entry doesn't exist
-def get_entry(item, enty_name: str, is_list=False):
-    return item[enty_name] if hasattr(item, enty_name) else ([] if is_list else '')
+def get_entry(item, entry_name: str, is_list=False):
+    return item[entry_name] if hasattr(item, entry_name) else ([] if is_list else '')
 
 
 def fetch_new_items(name, items: list):

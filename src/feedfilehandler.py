@@ -21,6 +21,7 @@ def format_item(item, key):
 
 def __format_default__(item, key):
     itempubt = ''
+    link = ''
 
     pubt = 'published: '
     if (hasattr(item, 'published')):
@@ -30,7 +31,8 @@ def __format_default__(item, key):
         pubt += get_current_time()
         itempubt = get_current_time()
 
-    link = f'[Link]({get_entry(item, "link")})'
+    if hasattr(item, 'link'):
+        link = f'[Link]({get_entry(item, "link")})'
 
     tags = feeddic[key]['tags']
     hashtags = '#' + ' #'.join(tags)

@@ -1,3 +1,4 @@
+from datetime import datetime
 from importlib.resources import path
 from os import path, mknod
 import feedparser
@@ -45,6 +46,9 @@ def listener():
 
 
 while 1:
-    log_info('checking updates')
+    print('listening ' + datetime.now().strftime("%H:%M:%S"))
+    log_info('listening')
     listener()
-    time.sleep(60)
+    print('done listening ' + datetime.now().strftime("%H:%M:%S"))
+    log_info('done listening')
+    time.sleep(1800)
