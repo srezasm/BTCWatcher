@@ -114,7 +114,8 @@ def __format_github_release__(item, key):
         for unametxt in re.findall('<a.*?a>', content):
             unamel = re.search(
                 '(http|ftp|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])', unametxt).group()
-            uname = re.search('\B@((?!.*(-){2,}.*)[a-z0-9][a-z0-9-]{0,38}[a-z0-9])', unametxt).group()
+            uname = re.search(
+                '\B@((?!.*(-){2,}.*)[a-z0-9][a-z0-9-]{0,38}[a-z0-9])', unametxt).group()
             content = content.replace(unametxt, f'[{uname}]({unamel})')
     for anc in re.findall('<a.*?a>', content):
         ancl = re.search(
@@ -156,6 +157,9 @@ def new_item(title: str, description: str, link: str, categories: list, pubdate:
         i = f.index('<item>')
         istr = etree.tostring(item).decode("utf-8")
         nwf = f[:i] + istr + f[i:]
+        
+        lbd = re.search('<lastBuildDate.*?lastBuildDate>', f).group()
+        nwf = nwf.replace(lbd, f'<lastBuildDate>{get_current_time()}</lastBuildDate>')
 
         log_info(f'writing item: {gui.text}')
         with open(filedic['feed'], 'w') as fw:
